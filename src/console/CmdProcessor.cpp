@@ -412,18 +412,48 @@ void CmdProcessor::processServerCmd(folly::StringPiece cmd) {
         }
         if (resp.get_rows() && !resp.get_rows()->empty()) {
             printResult(resp);
-            std::cout << "Got " << resp.get_rows()->size()
-                      << " rows (Time spent: "
-                      << resp.get_latency_in_us() << "/"
-                      << dur.elapsedInUSec() << " us)\n";
-        } else if (resp.get_rows()) {
+            temp_time = resp.get_latency_in_us();
+            if (temp_time < 1000) {
             std::cout << "Empty set (Time spent: "
-                      << resp.get_latency_in_us() << "/"
+                      << temp_time << "/"
                       << dur.elapsedInUSec() << " us)\n";
+            } else if (temp_time < 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << (temp_time-temp_time%100)/1000.0 << "/"
+                      << dur.elapsedInUSec()/1000.0 << " ms)\n";
+            } else if (resp.get_latency_in_us() >= 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << (temp_time-temp_time%100000)/1000000.0 << "/"
+                      << dur.elapsedInUSec()/1000000.0 << " s)\n";
+            }
+        } else if (resp.get_rows()) {
+            if (temp_time < 1000) {
+            std::cout << "Empty set (Time spent: "
+                      << temp_time << "/"
+                      << dur.elapsedInUSec() << " us)\n";
+            } else if (temp_time < 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << resp.get_latency_in_us()/1000.0 << "/"
+                      << (temp_time-temp_time%100)/1000.0 << " ms)\n";
+            } else if (resp.get_latency_in_us() >= 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << (temp_time-temp_time%100000)/1000000.0 << "/"
+                      << dur.elapsedInUSec()/1000000.0 << " s)\n";
+            }
         } else {
-            std::cout << "Execution succeeded (Time spent: "
-                      << resp.get_latency_in_us() << "/"
+            if (temp_time < 1000) {
+            std::cout << "Empty set (Time spent: "
+                      << temp_time << "/"
                       << dur.elapsedInUSec() << " us)\n";
+            } else if (temp_time < 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << (temp_time-temp_time%100)/1000.0 << "/"
+                      << dur.elapsedInUSec()/1000.0 << " ms)\n";
+            } else if (resp.get_latency_in_us() >= 1000000) {
+            std::cout << "Empty set (Time spent: "
+                      << (temp_time-temp_time%100000)/1000000.0 << "/"
+                      << dur.elapsedInUSec()/1000000.0 << " s)\n";
+            }
         }
         std::cout << std::endl;
     } else if (res == cpp2::ErrorCode::E_SYNTAX_ERROR) {
