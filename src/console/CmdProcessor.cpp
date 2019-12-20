@@ -397,23 +397,27 @@ bool CmdProcessor::processClientCmd(folly::StringPiece cmd,
     return false;
 }
 
-#define 1000.0 1k
+#include <iomanip>
 
-#define 1000000.0 1m
+#define Kilo 1000.0
+#define Million 1000000.0
 
-void time_transformation(std::int temp_time, std::int temp_time1) {
-    if (temp_time < 1k) {
+void time_transformation(std::double temp_time, std::double temp_time1) {
+    if (temp_time < Kilo) {
             std::cout << "Empty set (Time spent: "
+                      << setiosflags(ios::fixed) << setprecision(1)
                       << temp_time << "/"
                       << temp_time1 << " us)\n";
-            } else if (temp_time < 1m) {
+            } else if (temp_time < Million) {
             std::cout << "Empty set (Time spent: "
-                      << (temp_time-temp_time%100)/1k << "/"
-                      << temp_time1/1k << " ms)\n";
-            } else if (resp.get_latency_in_us() >= 1m) {
+                      << setiosflags(ios::fixed) << setprecision(1)
+                      << temp_time/Kilo << "/"
+                      << temp_time1/Kilo << " ms)\n";
+            } else if (resp.get_latency_in_us() >= Million) {
             std::cout << "Empty set (Time spent: "
-                      << (temp_time-temp_time%100000)/1m << "/"
-                      << dur.elapsedInUSec()/1m << " s)\n";
+                      << setiosflags(ios::fixed) << setprecision(1)
+                      << temp_time/Million << "/"
+                      << temp_time1/Million << " s)\n";
             }
 }
 
@@ -431,16 +435,16 @@ void CmdProcessor::processServerCmd(folly::StringPiece cmd) {
         }
         if (resp.get_rows() && !resp.get_rows()->empty()) {
             printResult(resp);
-            std::int temp_time = resp.get_latency_in_us();
-            std::int temp_time1 = dur.elapsedInUsec();
+            std::double temp_time = resp.get_latency_in_us();
+            std::double temp_time1 = dur.elapsedInUsec();
             time_transformation(temp_time, temp_time1);
         } else if (resp.get_rows()) {
-            std::int temp_time = resp.get_latency_in_us();
-            std::int temp_time1 = dur.elapsedInUsec();
+            std::double temp_time = resp.get_latency_in_us();
+            std::double temp_time1 = dur.elapsedInUsec();
             time_transformation(temp_time, temp_time1);
         } else {
-            std::int temp_time = resp.get_latency_in_us();
-            std::int temp_time1 = dur.elapsedInUsec();
+            std::double temp_time = resp.get_latency_in_us();
+            std::double temp_time1 = dur.elapsedInUsec();
             time_transformation(temp_time, temp_time1);
         }
         std::cout << std::endl;
