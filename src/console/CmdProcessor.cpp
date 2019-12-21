@@ -8,6 +8,7 @@
 #include "console/CmdProcessor.h"
 #include "time/Duration.h"
 
+
 namespace nebula {
 namespace graph {
 
@@ -397,28 +398,29 @@ bool CmdProcessor::processClientCmd(folly::StringPiece cmd,
     return false;
 }
 
-#include <iomanip>
-
 #define Kilo 1000.0
 #define Million 1000000.0
 
-void time_transformation(std::double temp_time, std::double temp_time1) {
-    if (temp_time < Kilo) {
-            std::cout << "Empty set (Time spent: "
-                      << setiosflags(ios::fixed) << setprecision(1)
+void time_transformation(int32_t temp_time,
+                uint64_t temp_time1,
+                time::Duration dur,
+                cpp2::ExecutionResponse resp) {
+    if (temp_time < Kilo || temp_time1 < Kilo) {
+        std::cout << "Got " << resp.get_rows()->size()
+                      << " rows (Time spent: "
                       << temp_time << "/"
-                      << temp_time1 << " us)\n";
-            } else if (temp_time < Million) {
-            std::cout << "Empty set (Time spent: "
-                      << setiosflags(ios::fixed) << setprecision(1)
-                      << temp_time/Kilo << "/"
-                      << temp_time1/Kilo << " ms)\n";
-            } else if (resp.get_latency_in_us() >= Million) {
-            std::cout << "Empty set (Time spent: "
-                      << setiosflags(ios::fixed) << setprecision(1)
-                      << temp_time/Million << "/"
-                      << temp_time1/Million << " s)\n";
-            }
+                      << dur.elapsedInUSec() << " us)\n";
+    } else if (temp_time/Kilo < Kilo) {
+        std::cout << "Got " << resp.get_rows()->size()
+                      << " rows (Time spent: "
+                      << resp.get_latency_in_us()/Kilo << "/"
+                      << dur.elapsedInMSec() << " ms)\n";
+    } else {
+        std::cout << "Got " << resp.get_rows()->size()
+                      << " rows (Time spent: "
+                      << resp.get_latency_in_us()/Million << "/"
+                      << dur.elapsedInSec() << " s)\n";
+    }
 }
 
 void CmdProcessor::processServerCmd(folly::StringPiece cmd) {
@@ -435,17 +437,17 @@ void CmdProcessor::processServerCmd(folly::StringPiece cmd) {
         }
         if (resp.get_rows() && !resp.get_rows()->empty()) {
             printResult(resp);
-            std::double temp_time = resp.get_latency_in_us();
-            std::double temp_time1 = dur.elapsedInUsec();
-            time_transformation(temp_time, temp_time1);
+            auto temp_time = resp.get_latency_in_us();
+            uint64_t temp_time1 = dur.elapsedInUSec();
+            time_transformation(temp_time, temp_time1, dur, resp);
         } else if (resp.get_rows()) {
-            std::double temp_time = resp.get_latency_in_us();
-            std::double temp_time1 = dur.elapsedInUsec();
-            time_transformation(temp_time, temp_time1);
+            auto temp_time = resp.get_latency_in_us();
+            uint64_t temp_time1 = dur.elapsedInUSec();
+            time_transformation(temp_time, temp_time1, dur, resp);
         } else {
-            std::double temp_time = resp.get_latency_in_us();
-            std::double temp_time1 = dur.elapsedInUsec();
-            time_transformation(temp_time, temp_time1);
+            auto temp_time = resp.get_latency_in_us();
+            uint64_t temp_time1 = dur.elapsedInUSec();
+            time_transformation(temp_time, temp_time1, dur, resp);
         }
         std::cout << std::endl;
     } else if (res == cpp2::ErrorCode::E_SYNTAX_ERROR) {
